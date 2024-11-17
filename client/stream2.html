@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная страница</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=ВАШ_КЛЮЧ" type="text/javascript"></script>
+</head>
+<body>
+        <section class="header-back">
+            <h1 class="text_h1_h">Тула, ул. Рязанская, д.4</h1>
+    </section>
+    <section class="main-back">
+
+        <main>
+            <div class="imagePreviewContainer">
+                <button class="but" onclick="window.location.href='index.html';" style="display: flex; flex-direction: column; align-items: center; margin-top: 10 px;">Домой</button>
+
+                <div id="response">
+                    <h1 class="h1_main" style="display: flex; flex-direction: column; align-items: center; ">Изображение:</h1>
+                    <img id="receivedImage" class="imagePreview" alt="Received from server" style="max-height: 500px; width: auto; display: none;">
+
+                </div>
+                                <div class="checkbox-container">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="containerCleanup">
+                        <span class="custom-checkbox"></span>
+                        Необходим вывоз мусора из контейнера
+                    </label>
+                    </div>
+                    <div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="territoryCleanup">
+                        <span class="custom-checkbox"></span>
+                        Необходим вывоз мусора с территории возле контейнера
+                    </label>
+                </div>
+            </div>            
+            <h1 class="h1_main">Интерактивная карта:</h1>
+            <div id="map" class="map"></div>
+        </main>
+</section>
+
+    <footer class="footer">
+        <p>© 2024 Дубы подземелья</p>
+    </footer>
+
+    <script>
+        url = 'http://127.0.0.1:8000'; // Адрес сервера с запущенным FastAPI
+        window.addEventListener('load', async () => {
+            const index = '2';
+
+const formData = new FormData(); 
+formData.append('index', index); // Создание массива параметров API-запроса. На данном моенте можно настроить систему передачи изображения. В данном примере используется демонстрационный функционал пользовательской API с анализом случайного элемента массива изображений
+
+try {
+    const response = await fetch(url + '/process', {
+        method: 'POST',
+        body: formData
+    });
+
+    if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+    }
+
+    // Получение данных из ответа
+    const data = await response.json();
+
+    // Логирование полученных данных
+    console.log("Response Data:", data);
+
+    const trashStatus = data.trash_status;
+    const trashOutsideStatus = data.trash_outside_status;
+
+    // Логирование статуса
+    console.log("trashStatus:", trashStatus);
+    console.log("trashOutsideStatus:", trashOutsideStatus);
+
+    // Преобразование base64 изображения в объект URL
+    const imageUrl = `data:image/jpeg;base64,${data.image_base64}`;
+
+    // Отображение изображения
+    const imgElement = document.getElementById('receivedImage');
+    imgElement.src = imageUrl;
+    imgElement.style.display = 'block'; // Показываем изображение
+
+    // Устанавливаем состояние чекбоксов в зависимости от полученных данных
+    document.getElementById('containerCleanup').checked = trashStatus;
+    document.getElementById('territoryCleanup').checked = trashOutsideStatus;
+
+    } catch (error) {
+console.log('1');    }
+});
+
+
+        // Инициализация Яндекс.Карты
+        function initMap() {
+            const map = new ymaps.Map('map', {
+                center: [54.1553733711842, 37.5893092549873], // Центр карты
+                zoom: 16, // Масштаб
+            });
+
+            const points = [ // Координаты маркеров
+                { coords: [54.15452451410942, 37.59107416679381], name: "Вознесенского 9", url: 'stream1.html' },
+                { coords: [54.15539871134127, 37.58658591280211], name: "Рязанская 4", url: 'stream2.html'  },
+            ];
+
+            points.forEach(point => {
+                const placemark = new ymaps.Placemark(point.coords, { iconCaption: point.name });
+                placemark.events.add('click', () => {
+                    window.location.href = point.url; // Переход по URL
+                });
+                map.geoObjects.add(placemark);
+            });
+        }
+
+        ymaps.ready(initMap);
+    </script>
+</body>
+</html>

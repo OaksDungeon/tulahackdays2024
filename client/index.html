@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная страница</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=ВАШ_КЛЮЧ" type="text/javascript"></script>
+</head>
+<body>
+    <section class="header-back">
+            <h1 class="text_h1_h">Добро пожаловать</h1>
+    </section>
+    <section class="main-back">
+        <main>
+            <h1 class="h1_main">Уникальное решение</h1>
+            <p class="text_main">Система анализа фотоматериалов, поступающих в Систему управления потоками отходов региона, для автоматического выявления и контроля нарушений, а также предоставления аналитической информации для повышения эффективности управления отходами</p>
+            <h1 class="h1_main">О нас</h1>
+            <p class="text_main">Мы - команда студентов ТГПУ им. Л.Н.Толстого "Дубы подземелья".
+                <br>
+                <br>Сорокина Александра Валерьевна - капитан команды,frontend-разработчик, дизайнер
+                <br>Винтерголлер Тимофей Андреевич - backend-разработчик, ML-инженер
+                <br>Овчинников Олег Александрович - backend-разработчик, специалист по базам данных</p>
+            <h1 class="h1_main">История</h1>
+            <p class="text_main">История обнаруженных нарушений</p>
+            <button class="but" onclick="window.location.href='table.html';">История</button>
+            <h1 class="h1_main">Пример</h1>
+            <p class="text_main">Загрузите изображение, чтобы протестировать работу нашего проекта!</p>
+            <div class="w-form">
+                <form id="uploadForm">
+                    <label for="file">Загрузите файл:</label>
+        <input type="file" id="file" name="file"><br><br>
+        <button type="button" id="uploadButton">Отправить</button>
+
+        <div id="imagePreviewContainer" class="imagePreviewContainer" style="display: none;">
+            <h1 class="h1_main">Загруженное изображение:</h1>
+            <img id="imagePreview" class="imagePreview" src="" alt="Предпросмотр изображения" style="max-width: 100%; height: auto; display: block; margin: 10px 0;">
+            <div class="checkbox-container">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="containerCleanup">Необходим вывоз мусора из контейнера
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="territoryCleanup">Необходим вывоз мусора с территории возле контейнера
+                </label>
+            </div>
+        </div>
+
+
+            </form>
+
+
+            </div>
+
+
+            <h1 class="h1_main">Интерактивная карта:</h1>
+            <div id="map" class="map"></div>
+        </main>
+    </div>
+</section>
+    <footer class="footer">
+        <p>© 2024 Дубы подземелья</p>
+    </footer>
+
+    <script>
+        url = 'http://127.0.0.1:8000'; // Адрес сервера с запущенным FastAPI
+
+        // Инициализация Яндекс.Карты
+
+
+        function initMap() {
+            const map = new ymaps.Map('map', {
+                center: [54.1553733711842, 37.5893092549873], // Центр карты
+                zoom: 16, // Масштаб
+            });
+
+            const points = [
+                { coords: [54.15452451410942, 37.59107416679381], name: "Вознесенского 9", url: 'stream1.html' },
+                { coords: [54.15539871134127, 37.58658591280211], name: "Рязанская 4", url: 'stream2.html'  },
+            ];
+
+            points.forEach(point => {
+                const placemark = new ymaps.Placemark(point.coords, { iconCaption: point.name });
+                placemark.events.add('click', () => {
+                    window.location.href = point.url; // Переход по URL
+                });
+                map.geoObjects.add(placemark);
+            });
+        }
+
+        ymaps.ready(initMap);
+
+        document.getElementById('uploadButton').addEventListener('click', async () => {
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Выберите файл для загрузки.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(url+'/process', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                // Декодируем изображение и устанавливаем в превью
+                const imagePreview = document.getElementById('imagePreview');
+                imagePreview.src = `data:image/jpeg;base64,${data.image_base64}`;
+                document.getElementById('imagePreviewContainer').style.display = 'flex';
+
+                // Обновляем значения чекбоксов
+                document.getElementById('containerCleanup').checked = data.trash_status;
+                document.getElementById('territoryCleanup').checked = data.trash_outside_status;
+            } catch (error) {
+                console.error('Ошибка при обработке файла:', error);
+                alert('Произошла ошибка при загрузке файла.');
+            }
+        });
+    </script>
+</body>
+</html>

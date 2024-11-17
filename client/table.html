@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Записи</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <section class="header-back">
+        <h1 class="text_h1_h">История нарушений</h1>
+</section>
+<section class="main-back">
+        <main>
+            <div>
+                <button class="but" onclick="window.location.href='index.html';" style="display: flex; flex-direction: column; align-items: center; margin-left: 50%; margin-top: 10px;">Домой</button>
+            <h1 class="h1_main">Список записей:</h3>
+            <table id="recordsTable" class="styled-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Время</th>
+                        <th>Адрес</th>
+                        <th>Состояние мусора</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Строки таблицы будут добавляться динамически -->
+                </tbody>
+            </table>
+        </div>
+        </main>
+    </div>
+    </section>
+    <footer class="footer">
+        <p>© 2024 Дубы подземелья</p>
+    </footer>
+
+    <script>
+        url = 'http://127.0.0.1:8000'; // Адрес сервера с запущенным FastAPI
+
+        // Функция для получения записей и отображения их в таблице
+        async function fetchRecords() {
+            try {
+                const response = await fetch(url+'/records');
+                if (!response.ok) {
+                    throw new Error(`Ошибка загрузки данных: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                const tableBody = document.querySelector('#recordsTable tbody');
+                tableBody.innerHTML = ''; // Очищаем таблицу перед заполнением
+
+                data.records.forEach(record => {
+                    const row = document.createElement('tr');
+
+                    // Добавляем ячейки с данными
+                    row.innerHTML = `
+                        <td>${record[0]}</td> <!-- ID -->
+                        <td>${record[1]}</td> <!-- Timestamp -->
+                        <td>${record[2]}</td> <!-- Address -->
+                        <td>${record[3] ? 'Необходим вывоз' : 'Все в порядке'}</td> <!-- Trash status -->
+                    `;
+
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Ошибка при загрузке записей:', error);
+                alert('Не удалось загрузить записи. Проверьте подключение к серверу.');
+            }
+        }
+
+        // Вызываем функцию при загрузке страницы
+        document.addEventListener('DOMContentLoaded', fetchRecords);
+    </script>
+</body>
+</html>
